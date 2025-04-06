@@ -10,6 +10,6 @@ public class OrderUseCase {
     private final OrderRepository repository;
 
     public Mono<Void> publish(Order order) {
-        return repository.publish(order);
+        return repository.emit(order);
     }
 }

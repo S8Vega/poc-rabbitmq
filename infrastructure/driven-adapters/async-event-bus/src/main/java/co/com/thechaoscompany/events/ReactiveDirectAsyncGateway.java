@@ -1,24 +1,23 @@
 package co.com.thechaoscompany.events;
 
-import lombok.AllArgsConstructor;
-import lombok.extern.java.Log;
-import org.reactivecommons.async.api.DirectAsyncGateway;
-import org.reactivecommons.async.impl.config.annotations.EnableDirectAsyncGateway;
-import reactor.core.publisher.Mono;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.cloudevents.CloudEvent;
 import io.cloudevents.core.builder.CloudEventBuilder;
 import io.cloudevents.jackson.JsonCloudEventData;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.core.JsonProcessingException;
+import lombok.AllArgsConstructor;
+import lombok.extern.java.Log;
+import org.reactivecommons.async.api.DirectAsyncGateway;
+import reactor.core.publisher.Mono;
 
-import java.util.UUID;
 import java.net.URI;
 import java.time.OffsetDateTime;
+import java.util.UUID;
 import java.util.logging.Level;
 
 @Log
 @AllArgsConstructor
-@EnableDirectAsyncGateway
+//@EnableDirectAsyncGateway
 public class ReactiveDirectAsyncGateway /* implements Gateway from domain */ {
     public static final String TARGET_NAME = "cleanArchitecture";// refers to remote spring.application.name property
     public static final String SOME_COMMAND_NAME = "some.command.name";
@@ -30,12 +29,12 @@ public class ReactiveDirectAsyncGateway /* implements Gateway from domain */ {
     public Mono<Void> runRemoteJob(Object command/*change for proper model*/) throws JsonProcessingException {
         log.log(Level.INFO, "Sending command: {0}: {1}", new String[]{SOME_COMMAND_NAME, command.toString()});
         CloudEvent commandCloudEvent = CloudEventBuilder.v1() //
-                                .withId(UUID.randomUUID().toString()) //
-                                .withSource(URI.create("https://spring.io/foos"))//
-                                .withType(SOME_COMMAND_NAME) //
-                                .withTime(OffsetDateTime.now())
-                                .withData("application/json", JsonCloudEventData.wrap(om.valueToTree(command)))
-                                .build();
+                .withId(UUID.randomUUID().toString()) //
+                .withSource(URI.create("https://spring.io/foos"))//
+                .withType(SOME_COMMAND_NAME) //
+                .withTime(OffsetDateTime.now())
+                .withData("application/json", JsonCloudEventData.wrap(om.valueToTree(command)))
+                .build();
 
         return gateway.sendCommand(commandCloudEvent, TARGET_NAME);
     }
