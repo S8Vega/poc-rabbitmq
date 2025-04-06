@@ -19,8 +19,11 @@ public class OrderEventListener {
     public void handleMessage(String message) {
         try {
             Thread.sleep(5000);
-            Order event = objectMapper.readValue(message, Order.class);
-            log.info("Received message: {}", event);
+            Order order = objectMapper.readValue(message, Order.class);
+            log.info("Received message: {}", order);
+            if (order.getId() % 2 == 0) {
+                throw new RuntimeException("Simulated error for even order ID");
+            }
         } catch (JsonProcessingException e) {
             log.error("Error processing message: {}", message, e);
         } catch (InterruptedException e) {
