@@ -11,6 +11,15 @@ spring:
       path: "/h2"
   profiles:
     include: null
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+rabbit:
+  exchange: orders.exchange
+  queue: orders.queue
+  routing-key: order.created
 management:
   endpoints:
     web:
