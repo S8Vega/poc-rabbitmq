@@ -5,6 +5,7 @@ dependencies {
     implementation project(':usecase')
     implementation project(':async-event-bus')
     implementation project(':reactive-web')
+    implementation project(':async-event-handler')
 
     implementation 'org.springframework.boot:spring-boot-starter'
     runtimeOnly('org.springframework.boot:spring-boot-devtools')

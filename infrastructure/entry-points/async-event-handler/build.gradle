@@ -1,0 +1,9 @@
+dependencies {
+    implementation project(':model')
+    implementation project(':usecase')
+    implementation 'org.reactivecommons:async-commons-rabbit-starter:5.2.3'
+    implementation 'org.springframework:spring-context'
+    implementation 'io.micrometer:micrometer-core'
+
+    implementation 'org.springframework.boot:spring-boot-starter-amqp'
+}
