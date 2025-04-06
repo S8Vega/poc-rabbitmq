@@ -10,8 +10,6 @@ import org.reactivecommons.async.commons.ext.CustomReporter;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
-import java.time.Duration;
-
 @Service
 @AllArgsConstructor
 public class MetricsReporter implements CustomReporter {
@@ -21,10 +19,10 @@ public class MetricsReporter implements CustomReporter {
     public void reportMetric(String type, String handlerPath, Long duration, boolean success) {
         String status = success ? "success" : "error";
         registry.timer("async_operation_flow_duration",
-                        "exception", "", "type",
-                        type, "operation", handlerPath,
-                        "status", status);
-                  // .record(Duration.ofMillis(duration));
+                "exception", "", "type",
+                type, "operation", handlerPath,
+                "status", status);
+        // .record(Duration.ofMillis(duration));
     }
 
     @Override

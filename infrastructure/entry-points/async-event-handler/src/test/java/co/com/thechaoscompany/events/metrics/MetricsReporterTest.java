@@ -1,7 +1,10 @@
 package co.com.thechaoscompany.events.metrics;
 
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.logging.LoggingMeterRegistry;
 import io.micrometer.core.instrument.logging.LoggingRegistryConfig;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.reactivecommons.api.domain.Command;
@@ -9,9 +12,7 @@ import org.reactivecommons.api.domain.DomainEvent;
 import org.reactivecommons.async.api.AsyncQuery;
 import org.reactivecommons.async.commons.communications.Message;
 import reactor.test.StepVerifier;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import io.micrometer.core.instrument.Timer;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class MetricsReporterTest {
@@ -21,13 +22,13 @@ public class MetricsReporterTest {
     private Message message;
 
     @BeforeEach
-    void setUp(){
+    void setUp() {
         LoggingMeterRegistry loggingMeterRegistry = LoggingMeterRegistry
-            .builder(LoggingRegistryConfig.DEFAULT)
-            .build();
+                .builder(LoggingRegistryConfig.DEFAULT)
+                .build();
 
         metricsReporter = new MetricsReporter(loggingMeterRegistry);
-        metricsReporter.reportMetric("type","path",10L,true);
+        metricsReporter.reportMetric("type", "path", 10L, true);
 
         error = new IllegalArgumentException("Error");
 
@@ -49,8 +50,8 @@ public class MetricsReporterTest {
         Command<String> command = new Command<>("name", "commandID", "data");
 
         StepVerifier
-            .create(metricsReporter.reportError(error, message, command, true))
-            .verifyComplete();
+                .create(metricsReporter.reportError(error, message, command, true))
+                .verifyComplete();
     }
 
     @Test
@@ -58,8 +59,8 @@ public class MetricsReporterTest {
         DomainEvent<String> domainEvent = new DomainEvent<>("name", "eventID", "data");
 
         StepVerifier
-            .create(metricsReporter.reportError(error, message, domainEvent, true))
-            .verifyComplete();
+                .create(metricsReporter.reportError(error, message, domainEvent, true))
+                .verifyComplete();
     }
 
     @Test
@@ -67,10 +68,10 @@ public class MetricsReporterTest {
         AsyncQuery<String> asyncQuery = new AsyncQuery<>("resource", "data");
 
         StepVerifier
-            .create(metricsReporter.reportError(error, message, asyncQuery, true))
-            .verifyComplete();
+                .create(metricsReporter.reportError(error, message, asyncQuery, true))
+                .verifyComplete();
     }
-    
+
     @Test
     void reportMetricTest() {
         MeterRegistry registry = new SimpleMeterRegistry();
@@ -80,11 +81,11 @@ public class MetricsReporterTest {
         reporter.reportMetric("event", "handlerPath", 200L, false);
 
         Timer successTimer = registry.find("async_operation_flow_duration")
-                                    .tags("type", "command", "operation", "handlerPath", "status", "success")
-                                    .timer();
+                .tags("type", "command", "operation", "handlerPath", "status", "success")
+                .timer();
         Timer errorTimer = registry.find("async_operation_flow_duration")
-                                .tags("type", "event", "operation", "handlerPath", "status", "error")
-                                .timer();
+                .tags("type", "event", "operation", "handlerPath", "status", "error")
+                .timer();
 
         assertThat(successTimer).isNotNull();
         assertThat(errorTimer).isNotNull();

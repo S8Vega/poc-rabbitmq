@@ -14,13 +14,13 @@ class QueriesHandlerTest {
 
     @Test
     void queriesHandlerTest() {
-    // Enviar una consulta con datos específicos
+        // Enviar una consulta con datos específicos
         String query = "Data";
-        
+
         // Verificar que el valor retornado sea el esperado
         StepVerifier.create(queriesHandler.handleQueryA(query))
-            .expectNext("Response Data") // Verifica que el valor recibido sea "Response Data"
-            .expectComplete()  // Verifica que el Mono se complete
-            .verify();
+                .expectNext("Response Data") // Verifica que el valor recibido sea "Response Data"
+                .expectComplete()  // Verifica que el Mono se complete
+                .verify();
     }
 }

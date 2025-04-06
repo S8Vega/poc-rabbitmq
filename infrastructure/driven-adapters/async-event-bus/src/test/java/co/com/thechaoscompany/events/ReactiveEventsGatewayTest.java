@@ -1,19 +1,22 @@
 package co.com.thechaoscompany.events;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import io.cloudevents.CloudEvent;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import reactor.core.publisher.Mono;
 import org.reactivecommons.api.domain.DomainEventBus;
+import reactor.core.publisher.Mono;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import io.cloudevents.CloudEvent;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 public class ReactiveEventsGatewayTest {
 
@@ -48,10 +51,12 @@ public class ReactiveEventsGatewayTest {
         verify(domainEventBus, times(1)).emit(any(CloudEvent.class));
     }
 
-   @Test
+    @Test
     public void testEmitConstructsCloudEvent() {
         Object event = new Object() {
-            public String toString() { return "testEvent"; }
+            public String toString() {
+                return "testEvent";
+            }
         };
 
         when(objectMapper.valueToTree(event)).thenReturn(mock(ObjectNode.class));
@@ -65,9 +70,5 @@ public class ReactiveEventsGatewayTest {
         assertEquals(ReactiveEventsGateway.SOME_EVENT_NAME, cloudEvent.getType());
         assertEquals("https://reactive-commons.org/foos", cloudEvent.getSource().toString());
     }
-
-
-
-
 
 }

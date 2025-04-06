@@ -5,7 +5,6 @@ import org.junit.jupiter.api.Test;
 import org.reactivecommons.api.domain.Command;
 import reactor.test.StepVerifier;
 
-
 import java.util.UUID;
 
 class CommandsHandlerTest {
@@ -17,10 +16,10 @@ class CommandsHandlerTest {
     }
 
     @Test
-    void handleCommandATest(){
+    void handleCommandATest() {
         StepVerifier.create(commandsHandler.handleCommandA(
-            new Command<>("COMMAND",
-                UUID.randomUUID().toString(),
-                    "Data"))).expectComplete().verify();
+                new Command<>("COMMAND",
+                        UUID.randomUUID().toString(),
+                        "Data"))).expectComplete().verify();
     }
 }
