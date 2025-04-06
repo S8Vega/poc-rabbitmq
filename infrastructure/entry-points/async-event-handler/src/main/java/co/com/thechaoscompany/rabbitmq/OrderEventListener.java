@@ -18,10 +18,13 @@ public class OrderEventListener {
     @RabbitListener(queues = "${rabbit.queue}")
     public void handleMessage(String message) {
         try {
+            Thread.sleep(5000);
             Order event = objectMapper.readValue(message, Order.class);
             log.info("Received message: {}", event);
         } catch (JsonProcessingException e) {
             log.error("Error processing message: {}", message, e);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
         }
     }
 }
