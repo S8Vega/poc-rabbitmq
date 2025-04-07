@@ -14,18 +14,20 @@ public class RabbitAdapterConfig {
 
     @Value("${rabbit.exchange}")
     private String exchange;
-
     @Value("${rabbit.queue}")
     private String queue;
-
     @Value("${rabbit.routing-key}")
     private String routingKey;
+    @Value("${rabbit.dlq.exchange}")
+    private String dlqExchange;
+    @Value("${rabbit.dlq.routing-key}")
+    private String dlqRoutingKey;
 
     @Bean
     public Queue ordersQueue() {
         return QueueBuilder.durable(queue)
-                .withArgument("x-dead-letter-exchange", "orders.dlx")
-                .withArgument("x-dead-letter-routing-key", "order.failed")
+                .withArgument("x-dead-letter-exchange", dlqExchange)
+                .withArgument("x-dead-letter-routing-key", dlqRoutingKey)
                 .build();
     }
 

@@ -15,14 +15,14 @@ public class OrderEventListener {
 
     private final ObjectMapper objectMapper;
 
-    private static void sleep() throws InterruptedException {
-        Thread.sleep(5000);
+    private static void sleep(int seconds) throws InterruptedException {
+        Thread.sleep(seconds * 1000L);
     }
 
     @RabbitListener(queues = "${rabbit.queue}")
     public void handleMessage(String message) {
         try {
-            sleep();
+            sleep(5);
             Order order = objectMapper.readValue(message, Order.class);
             log.info("Received message: {}", order);
             if (order.getId() % 2 == 0) {
@@ -33,9 +33,9 @@ public class OrderEventListener {
         }
     }
 
-    @RabbitListener(queues = "orders.dlq")
+    @RabbitListener(queues = "${rabbit.dlq.queue}")
     public void handleDeadMessage(String msg) throws InterruptedException {
-        sleep();
+        sleep(10);
         log.warn("Message received from DLQ: {}", msg);
     }
 

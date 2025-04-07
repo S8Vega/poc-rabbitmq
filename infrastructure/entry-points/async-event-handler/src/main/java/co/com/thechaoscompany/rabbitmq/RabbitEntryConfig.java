@@ -8,11 +8,19 @@ import org.springframework.amqp.rabbit.config.RetryInterceptorBuilder;
 import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.retry.RejectAndDontRequeueRecoverer;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class RabbitEntryConfig {
+
+    @Value("${rabbit.dlq.queue}")
+    private String dlqQueue;
+    @Value("${rabbit.dlq.exchange}")
+    private String dlqExchange;
+    @Value("${rabbit.dlq.routing-key}")
+    private String dlqRoutingKey;
 
     @Bean
     public SimpleRabbitListenerContainerFactory rabbitListenerContainerFactory(ConnectionFactory connectionFactory) {
@@ -30,18 +38,18 @@ public class RabbitEntryConfig {
 
     @Bean
     public Queue ordersDlqQueue() {
-        return new Queue("orders.dlq", true);
+        return new Queue(dlqQueue, true);
     }
 
     @Bean
     public DirectExchange dlqExchange() {
-        return new DirectExchange("orders.dlx");
+        return new DirectExchange(dlqExchange);
     }
 
     @Bean
     public Binding dlqBinding() {
         return BindingBuilder.bind(ordersDlqQueue())
                 .to(dlqExchange())
-                .with("order.failed");
+                .with(dlqRoutingKey);
     }
 }

@@ -20,6 +20,10 @@ rabbit:
   exchange: orders.exchange
   queue: orders.queue
   routing-key: order.created
+  dlq:
+    exchange: orders.dlx
+    queue: orders.dlq
+    routing-key: order.failed
 management:
   endpoints:
     web:
