@@ -1,5 +1,9 @@
 package co.com.thechaoscompany.rabbitmq;
 
+import org.springframework.amqp.core.Binding;
+import org.springframework.amqp.core.BindingBuilder;
+import org.springframework.amqp.core.DirectExchange;
+import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.rabbit.config.RetryInterceptorBuilder;
 import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
@@ -8,20 +12,36 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-public class RabbitConfig {
+public class RabbitEntryConfig {
+
     @Bean
     public SimpleRabbitListenerContainerFactory rabbitListenerContainerFactory(ConnectionFactory connectionFactory) {
         SimpleRabbitListenerContainerFactory factory = new SimpleRabbitListenerContainerFactory();
         factory.setConnectionFactory(connectionFactory);
 
-        // Retry con 3 intentos, 2 segundos entre cada uno
         factory.setAdviceChain(RetryInterceptorBuilder.stateless()
                 .maxAttempts(3)
                 .backOffOptions(2000, 2.0, 10000)
-                .recoverer(new RejectAndDontRequeueRecoverer()) // importante: no lo reintenta infinito
+                .recoverer(new RejectAndDontRequeueRecoverer())
                 .build());
 
         return factory;
     }
 
+    @Bean
+    public Queue ordersDlqQueue() {
+        return new Queue("orders.dlq", true);
+    }
+
+    @Bean
+    public DirectExchange dlqExchange() {
+        return new DirectExchange("orders.dlx");
+    }
+
+    @Bean
+    public Binding dlqBinding() {
+        return BindingBuilder.bind(ordersDlqQueue())
+                .to(dlqExchange())
+                .with("order.failed");
+    }
 }

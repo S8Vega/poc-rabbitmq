@@ -30,4 +30,10 @@ public class OrderEventListener {
             throw new RuntimeException(e);
         }
     }
+
+    @RabbitListener(queues = "orders.dlq")
+    public void handleDeadMessage(String msg) {
+        log.warn("Mensaje recibido en DLQ: {}", msg);
+    }
+
 }

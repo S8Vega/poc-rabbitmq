@@ -3,13 +3,14 @@ package co.com.thechaoscompany.rabbitmq;
 import org.springframework.amqp.core.Binding;
 import org.springframework.amqp.core.BindingBuilder;
 import org.springframework.amqp.core.Queue;
+import org.springframework.amqp.core.QueueBuilder;
 import org.springframework.amqp.core.TopicExchange;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-public class RabbitConfig {
+public class RabbitAdapterConfig {
 
     @Value("${rabbit.exchange}")
     private String exchange;
@@ -22,7 +23,10 @@ public class RabbitConfig {
 
     @Bean
     public Queue ordersQueue() {
-        return new Queue(queue, true);
+        return QueueBuilder.durable(queue)
+                .withArgument("x-dead-letter-exchange", "orders.dlx")
+                .withArgument("x-dead-letter-routing-key", "order.failed")
+                .build();
     }
 
     @Bean
@@ -31,7 +35,7 @@ public class RabbitConfig {
     }
 
     @Bean
-    public Binding binding(Queue ordersQueue, TopicExchange ordersExchange) {
-        return BindingBuilder.bind(ordersQueue).to(ordersExchange).with(routingKey);
+    public Binding binding() {
+        return BindingBuilder.bind(ordersQueue()).to(ordersExchange()).with(routingKey);
     }
 }
