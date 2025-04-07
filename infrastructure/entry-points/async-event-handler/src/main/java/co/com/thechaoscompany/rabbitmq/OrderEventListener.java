@@ -35,7 +35,7 @@ public class OrderEventListener {
 
     @RabbitListener(queues = "${rabbit.dlq.queue}")
     public void handleDeadMessage(String msg) throws InterruptedException {
-        sleep(10);
+        sleep(15);
         log.warn("Message received from DLQ: {}", msg);
     }
 
