@@ -15,25 +15,28 @@ public class OrderEventListener {
 
     private final ObjectMapper objectMapper;
 
+    private static void sleep() throws InterruptedException {
+        Thread.sleep(5000);
+    }
+
     @RabbitListener(queues = "${rabbit.queue}")
     public void handleMessage(String message) {
         try {
-            Thread.sleep(5000);
+            sleep();
             Order order = objectMapper.readValue(message, Order.class);
             log.info("Received message: {}", order);
             if (order.getId() % 2 == 0) {
                 throw new RuntimeException("Simulated error for even order ID");
             }
-        } catch (JsonProcessingException e) {
+        } catch (JsonProcessingException | InterruptedException e) {
             log.error("Error processing message: {}", message, e);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
         }
     }
 
     @RabbitListener(queues = "orders.dlq")
-    public void handleDeadMessage(String msg) {
-        log.warn("Mensaje recibido en DLQ: {}", msg);
+    public void handleDeadMessage(String msg) throws InterruptedException {
+        sleep();
+        log.warn("Message received from DLQ: {}", msg);
     }
 
 }
