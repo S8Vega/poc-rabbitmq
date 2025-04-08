@@ -1,6 +1,8 @@
 apply plugin: 'org.springframework.boot'
 
 dependencies {
+	testImplementation 'com.tngtech.archunit:archunit:1.4.0'
+	implementation project(':micrometer')
     implementation project(':model')
     implementation project(':usecase')
     implementation project(':async-event-bus')
