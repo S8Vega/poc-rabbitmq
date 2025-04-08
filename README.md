@@ -54,3 +54,111 @@ concretas de las dependencias declaradas. Adem�s inicia la aplicaci�n (es el
 encontraremos la funci�n �public static void main(String[] args)�.
 
 **Los beans de los casos de uso se disponibilizan automaticamente gracias a un '@ComponentScan' ubicado en esta capa.**
+
+Perfecto, te dejo los pasos detallados para que puedas copiar y pegar en tu README. Está enfocado para entorno local
+usando **Podman** y **PowerShell** en Windows, con una aplicación Spring Boot que expone métricas en
+`/actuator/prometheus`.
+
+---
+
+## 🧩 Observabilidad con Prometheus y Grafana usando Podman en Windows
+
+### 1. Habilita Prometheus en Spring Boot
+
+Agrega estas dependencias en `build.gradle`:
+
+```groovy
+implementation 'io.micrometer:micrometer-registry-prometheus'
+implementation 'org.springframework.boot:spring-boot-starter-actuator'
+```
+
+En `application.yml`:
+
+```yaml
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+```
+
+Tu app expone métricas en:  
+👉 `http://localhost:8080/actuator/prometheus`
+
+---
+
+### 2. Crea el archivo de configuración de Prometheus
+
+Crea un archivo llamado `prometheus.yml` en la raíz del proyecto con este contenido:
+
+```yaml
+global:
+  scrape_interval: 5s
+
+scrape_configs:
+- job_name: 'spring-boot-app'
+  metrics_path: '/actuator/prometheus'
+  static_configs:
+  - targets: [ 'host.containers.internal:8080' ]
+```
+
+> ⚠️ `host.containers.internal` permite que los contenedores accedan a tu máquina host desde Podman.
+
+---
+
+### 3. Levanta Prometheus con Podman
+
+Abre PowerShell en la raíz del proyecto y ejecuta:
+
+```powershell
+podman run -d --name prometheus `
+  -p 9090:9090 `
+  -v "${PWD}\prometheus.yml:/etc/prometheus/prometheus.yml:ro" `
+  prom/prometheus
+```
+
+---
+
+### 4. Levanta Grafana con Podman
+
+```powershell
+podman run -d --name grafana `
+  -p 3000:3000 `
+  grafana/grafana
+```
+
+---
+
+### 5. Configura Grafana
+
+1. Accede a [http://localhost:3000](http://localhost:3000)
+2. Usuario: `admin`, Contraseña: `admin` (te pedirá cambiarla)
+3. Ve a **Settings > Data Sources > Add data source**
+4. Elige **Prometheus**
+5. En la URL escribe: `http://host.containers.internal:9090`
+6. Click en **Save & Test**
+
+---
+
+### 6. Visualiza métricas
+
+Puedes crear un dashboard personalizado. Algunas métricas útiles:
+
+- Mensajes procesados:
+  ```promql
+  rate(spring_rabbitmq_listener_seconds_count[1m])
+  ```
+- Errores:
+  ```promql
+  rate(spring_rabbitmq_listener_seconds_count{result="failure"}[1m])
+  ```
+- Tiempo de procesamiento:
+  ```promql
+  rate(spring_rabbitmq_listener_seconds_sum[1m])
+  ```
+
+---
