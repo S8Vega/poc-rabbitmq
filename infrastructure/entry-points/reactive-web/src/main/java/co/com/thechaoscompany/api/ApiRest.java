@@ -2,7 +2,7 @@ package co.com.thechaoscompany.api;
 
 import co.com.thechaoscompany.model.order.Order;
 import co.com.thechaoscompany.usecase.order.OrderUseCase;
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -12,9 +12,9 @@ import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
 
+@RequiredArgsConstructor
 @RestController
 @RequestMapping(value = "/order", produces = MediaType.APPLICATION_JSON_VALUE)
-@AllArgsConstructor
 public class ApiRest {
     private final OrderUseCase useCase;
 
