@@ -1,118 +1,43 @@
-# Proyecto Base Implementando Clean Architecture
+# 🧪 PoC Arquitectura Orientada a Eventos + Observabilidad + DevSecOps
 
-## Antes de Iniciar
-
-Empezaremos por explicar los diferentes componentes del proyectos y partiremos de los componentes externos, continuando
-con los componentes core de negocio (dominio) y por �ltimo el inicio y configuraci�n de la aplicaci�n.
-
-Lee el
-art�culo [Clean Architecture � Aislando los detalles](https://medium.com/bancolombia-tech/clean-architecture-aislando-los-detalles-4f9530f35d7a)
-
-# Arquitectura
-
-![Clean Architecture](https://miro.medium.com/max/1400/1*ZdlHz8B0-qu9Y-QO3AXR_w.png)
-
-## Domain
-
-Es el m�dulo m�s interno de la arquitectura, pertenece a la capa del dominio y encapsula la l�gica y reglas del negocio
-mediante modelos y entidades del dominio.
-
-## Usecases
-
-Este m�dulo gradle perteneciente a la capa del dominio, implementa los casos de uso del sistema, define l�gica de
-aplicaci�n y reacciona a las invocaciones desde el m�dulo de entry points, orquestando los flujos hacia el m�dulo de
-entities.
-
-## Infrastructure
-
-### Helpers
-
-En el apartado de helpers tendremos utilidades generales para los Driven Adapters y Entry Points.
-
-Estas utilidades no est�n arraigadas a objetos concretos, se realiza el uso de generics para modelar comportamientos
-gen�ricos de los diferentes objetos de persistencia que puedan existir, este tipo de implementaciones se realizan
-basadas en el patr�n de
-dise�o [Unit of Work y Repository](https://medium.com/@krzychukosobudzki/repository-design-pattern-bc490b256006)
-
-Estas clases no puede existir solas y debe heredarse su compartimiento en los **Driven Adapters**
-
-### Driven Adapters
-
-Los driven adapter representan implementaciones externas a nuestro sistema, como lo son conexiones a servicios rest,
-soap, bases de datos, lectura de archivos planos, y en concreto cualquier origen y fuente de datos con la que debamos
-interactuar.
-
-### Entry Points
-
-Los entry points representan los puntos de entrada de la aplicaci�n o el inicio de los flujos de negocio.
-
-## Application
-
-Este m�dulo es el m�s externo de la arquitectura, es el encargado de ensamblar los distintos m�dulos, resolver las
-dependencias y crear los beans de los casos de use (UseCases) de forma autom�tica, inyectando en �stos instancias
-concretas de las dependencias declaradas. Adem�s inicia la aplicaci�n (es el �nico m�dulo del proyecto donde
-encontraremos la funci�n �public static void main(String[] args)�.
-
-**Los beans de los casos de uso se disponibilizan automaticamente gracias a un '@ComponentScan' ubicado en esta capa.**
-
-Perfecto, te dejo los pasos detallados para que puedas copiar y pegar en tu README. Está enfocado para entorno local
-usando **Podman** y **PowerShell** en Windows, con una aplicación Spring Boot que expone métricas en
-`/actuator/prometheus`.
+Esta prueba de concepto implementa una arquitectura orientada a eventos usando RabbitMQ y promueve buenas prácticas de
+observabilidad y seguridad optimizando imágenes Docker (con Podman y Gradle).
 
 ---
 
-## 🧩 Observabilidad con Prometheus y Grafana usando Podman en Windows
+## 🚀 Requisitos
 
-### 1. Habilita Prometheus en Spring Boot
-
-Agrega estas dependencias en `build.gradle`:
-
-```groovy
-implementation 'io.micrometer:micrometer-registry-prometheus'
-implementation 'org.springframework.boot:spring-boot-starter-actuator'
-```
-
-En `application.yml`:
-
-```yaml
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health,info,prometheus
-  metrics:
-    export:
-      prometheus:
-        enabled: true
-```
-
-Tu app expone métricas en:  
-👉 `http://localhost:8080/actuator/prometheus`
+- [Podman](https://podman.io/)
+- [PowerShell](https://learn.microsoft.com/en-us/powershell/)
+- [Java 17](https://adoptium.net/)
+- [Gradle](https://gradle.org/)
 
 ---
 
-### 2. Crea el archivo de configuración de Prometheus
+## 🐰 RabbitMQ
 
-Crea un archivo llamado `prometheus.yml` en la raíz del proyecto con este contenido:
+### 1. Levantar RabbitMQ (solo la primera vez)
 
-```yaml
-global:
-  scrape_interval: 5s
-
-scrape_configs:
-- job_name: 'spring-boot-app'
-  metrics_path: '/actuator/prometheus'
-  static_configs:
-  - targets: [ 'host.containers.internal:8080' ]
+```powershell
+podman run -d --restart always --name rabbitmq `
+  -p 5672:5672 -p 15672:15672 `
+  rabbitmq:3.9-management
 ```
 
-> ⚠️ `host.containers.internal` permite que los contenedores accedan a tu máquina host desde Podman.
+### 2. Iniciar RabbitMQ (después)
+
+```powershell
+podman start rabbitmq
+```
+
+Accede al panel: [http://localhost:15672](http://localhost:15672)  
+Usuario: `guest` – Contraseña: `guest`
 
 ---
+
+## 📈 Prometheus + Grafana
 
 ### 3. Levanta Prometheus con Podman
-
-Abre PowerShell en la raíz del proyecto y ejecuta:
 
 ```powershell
 podman run -d --name prometheus `
@@ -120,8 +45,6 @@ podman run -d --name prometheus `
   -v "${PWD}\prometheus.yml:/etc/prometheus/prometheus.yml:ro" `
   prom/prometheus
 ```
-
----
 
 ### 4. Levanta Grafana con Podman
 
@@ -131,34 +54,43 @@ podman run -d --name grafana `
   grafana/grafana
 ```
 
----
-
 ### 5. Configura Grafana
 
-1. Accede a [http://localhost:3000](http://localhost:3000)
-2. Usuario: `admin`, Contraseña: `admin` (te pedirá cambiarla)
+1. Abre [http://localhost:3000](http://localhost:3000)
+2. Usuario: `admin` | Contraseña: `admin` (te pedirá cambiarla)
 3. Ve a **Settings > Data Sources > Add data source**
-4. Elige **Prometheus**
-5. En la URL escribe: `http://host.containers.internal:9090`
-6. Click en **Save & Test**
+4. Selecciona **Prometheus**
+5. Usa esta URL: `http://host.containers.internal:9090`
+6. Clic en **Save & Test**
 
 ---
 
-### 6. Visualiza métricas
+## 📦 Construcción y ejecución de la app
 
-Puedes crear un dashboard personalizado. Algunas métricas útiles:
+La imagen está optimizada y basada en una imagen mínima de Java, compilada con Gradle.
 
-- Mensajes procesados:
-  ```promql
-  rate(spring_rabbitmq_listener_seconds_count[1m])
-  ```
-- Errores:
-  ```promql
-  rate(spring_rabbitmq_listener_seconds_count{result="failure"}[1m])
-  ```
-- Tiempo de procesamiento:
-  ```promql
-  rate(spring_rabbitmq_listener_seconds_sum[1m])
-  ```
+### 6. Build y run de la aplicación
+
+```powershell
+./gradlew clean build
+Move-Item -Path "applications/app-service/build/libs/poc-rabbitmq.jar" -Destination "deployment/" -Force
+cd deployment
+podman build -t poc-rabbitmq-img .
+podman run --name poc-rabbitmq-cnt -p 8080:8080 poc-rabbitmq-img
+
+podman rm poc-rabbitmq-cnt
+podman rmi poc-rabbitmq-img
+```
+
+La app estará disponible en: [http://localhost:8080](http://localhost:8080)
+
+---
+
+## 🛡️ Seguridad y optimización
+
+- Imagen de base mínima (`eclipse-temurin:17-jdk-alpine`)
+- Separación en multi-stage build
+- Usuario no root
+- `.dockerignore` configurado
 
 ---
