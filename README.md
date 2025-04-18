@@ -80,6 +80,8 @@ podman run --name poc-rabbitmq-cnt -p 8080:8080 poc-rabbitmq-img
 
 podman rm poc-rabbitmq-cnt
 podman rmi poc-rabbitmq-img
+
+.\trivy.exe image localhost/poc-rabbitmq-img
 ```
 
 La app estará disponible en: [http://localhost:8080](http://localhost:8080)
