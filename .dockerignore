@@ -1,0 +1,12 @@
+.gradle/
+.idea/
+build/
+**/build/
+**/.gradle/
+**/*.md
+**/*.iml
+**/.dockerignore
+**/Dockerfile
+**/.env
+**/test/
+**/src/test/

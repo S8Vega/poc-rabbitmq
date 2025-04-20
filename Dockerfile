@@ -4,8 +4,8 @@ WORKDIR /app
 
 COPY . .
 
+RUN ls -l /app/applications/app-service/build.gradle
 RUN gradle clean build -x test
-RUN ls -R /app
 
 # Etapa 2: Imagen final solo con la aplicación compilada
 FROM eclipse-temurin:17.0.14_7-jdk-alpine
