@@ -275,3 +275,54 @@ Key environment variables:
 - `RABBITMQ_HOST`: RabbitMQ host (default: `localhost`, Docker: `host.containers.internal`)
 - `RABBITMQ_PORT`: RabbitMQ port (default: `5672`)
 - `JAVA_OPTS`: JVM options for container optimization
+
+## Common Development Tasks
+
+### View RabbitMQ Queues and Messages
+Access the RabbitMQ Management UI at http://localhost:15672 (guest/guest) to:
+- Monitor queue depths
+- View messages in `orders.queue` and `orders.dlq`
+- Inspect exchange bindings
+- Purge queues for testing
+
+### Check Application Logs
+When running with Gradle or JAR, logs output to console. When running in Podman:
+```bash
+podman logs -f poc-rabbitmq-cnt
+```
+
+### Troubleshooting
+
+**Connection refused to RabbitMQ**
+- Verify RabbitMQ is running: `podman ps | grep rabbitmq`
+- Check connection: `telnet localhost 5672`
+- When running app in container, use `RABBITMQ_HOST=host.containers.internal`
+
+**Tests failing**
+- Ensure no conflicting process on port 8080
+- Check Java version: `java -version` (should be 17)
+- Clean build: `./gradlew clean build --refresh-dependencies`
+
+**Gradlew permission denied**
+```bash
+chmod +x gradlew
+```
+
+### Working with the Bancolombia Plugin
+
+This project uses the Bancolombia Clean Architecture Gradle plugin. Useful tasks:
+```bash
+# Validate architecture structure
+./gradlew validateStructure
+
+# Generate new use case
+./gradlew generateUseCase --name=NewUseCaseName
+
+# Generate new model
+./gradlew generateModel --name=NewModelName
+
+# Generate new driven adapter
+./gradlew generateDrivenAdapter --type=asynceventbus
+```
+
+See plugin documentation: https://github.com/bancolombia/scaffold-clean-architecture
