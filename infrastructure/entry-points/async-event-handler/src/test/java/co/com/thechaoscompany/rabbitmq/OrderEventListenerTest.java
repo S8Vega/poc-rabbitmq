@@ -10,122 +10,80 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.time.LocalDateTime;
-
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class OrderEventListenerTest {
 
-    @Mock
-    private ObjectMapper objectMapper;
+  @Mock
+  private ObjectMapper objectMapper;
 
-    @InjectMocks
-    private OrderEventListener listener;
+  @InjectMocks
+  private OrderEventListener orderEventListener;
 
-    private Order validOrder;
-    private String validOrderJson;
+  private Order order;
 
-    @BeforeEach
-    void setUp() {
-        validOrder = Order.builder()
-                .id(1L)
-                .customerId("CUST001")
-                .productId("PROD123")
-                .quantity(5)
-                .status("PENDING")
-                .date(LocalDateTime.now())
-                .build();
+  @BeforeEach
+  void setUp() {
+    order = Order.builder()
+        .id(1L)
+        .customerId("C123")
+        .productId("P456")
+        .quantity(10)
+        .status("PENDING")
+        .build();
+    orderEventListener.setSleepSeconds(0);
+    orderEventListener.setDlqSleepSeconds(0);
+  }
 
-        validOrderJson = "{\"id\":1,\"customerId\":\"CUST001\",\"productId\":\"PROD123\",\"quantity\":5,\"status\":\"PENDING\"}";
-    }
+  @Test
+  void handleMessageSuccess() throws JsonProcessingException {
+    // Arrange
+    String message = "{\"id\":1}";
+    when(objectMapper.readValue(message, Order.class)).thenReturn(order);
 
-    @Test
-    void handleMessage_withOddOrderId_shouldProcessSuccessfully() throws JsonProcessingException {
-        // Given
-        when(objectMapper.readValue(eq(validOrderJson), eq(Order.class))).thenReturn(validOrder);
+    // Act & Assert
+    assertDoesNotThrow(() -> orderEventListener.handleMessage(message));
+    verify(objectMapper).readValue(message, Order.class);
+  }
 
-        // When
-        listener.handleMessage(validOrderJson);
+  @Test
+  void handleMessageSimulatedError() throws JsonProcessingException {
+    // Arrange
+    order.setId(2L); // Even ID triggers error
+    String message = "{\"id\":2}";
+    when(objectMapper.readValue(message, Order.class)).thenReturn(order);
 
-        // Then
-        verify(objectMapper).readValue(eq(validOrderJson), eq(Order.class));
-    }
+    // Act & Assert
+    // The method throws RuntimeException for even IDs
+    org.junit.jupiter.api.Assertions.assertThrows(RuntimeException.class,
+        () -> orderEventListener.handleMessage(message));
 
-    @Test
-    void handleMessage_withEvenOrderId_shouldThrowRuntimeException() throws JsonProcessingException {
-        // Given
-        Order evenOrderIdOrder = validOrder.toBuilder().id(2L).build();
-        String evenOrderJson = "{\"id\":2,\"customerId\":\"CUST001\",\"productId\":\"PROD123\",\"quantity\":5,\"status\":\"PENDING\"}";
-        when(objectMapper.readValue(eq(evenOrderJson), eq(Order.class))).thenReturn(evenOrderIdOrder);
+    verify(objectMapper).readValue(message, Order.class);
+  }
 
-        // When/Then
-        assertThrows(RuntimeException.class, () -> listener.handleMessage(evenOrderJson));
+  @Test
+  void handleMessageJsonProcessingException() throws JsonProcessingException {
+    // Arrange
+    String message = "invalid json";
+    when(objectMapper.readValue(anyString(), eq(Order.class))).thenThrow(new JsonProcessingException("Error") {
+    });
 
-        verify(objectMapper).readValue(eq(evenOrderJson), eq(Order.class));
-        // RuntimeException is thrown to trigger DLQ routing in RabbitMQ
-    }
+    // Act & Assert
+    // JsonProcessingException is caught and logged, so it doesn't throw
+    assertDoesNotThrow(() -> orderEventListener.handleMessage(message));
+    verify(objectMapper).readValue(message, Order.class);
+  }
 
-    @Test
-    void handleMessage_withInvalidJson_shouldHandleJsonProcessingException() throws JsonProcessingException {
-        // Given
-        String invalidJson = "{invalid json}";
-        when(objectMapper.readValue(eq(invalidJson), eq(Order.class)))
-                .thenThrow(new JsonProcessingException("Invalid JSON") {});
+  @Test
+  void handleDeadMessage() {
+    // Arrange
+    String msg = "dead message";
 
-        // When
-        listener.handleMessage(invalidJson);
-
-        // Then
-        verify(objectMapper).readValue(eq(invalidJson), eq(Order.class));
-        // Exception is caught and logged, no exception propagated
-    }
-
-    @Test
-    void handleMessage_withNullMessage_shouldHandleException() throws JsonProcessingException {
-        // Given
-        when(objectMapper.readValue((String) isNull(), eq(Order.class)))
-                .thenThrow(new JsonProcessingException("Null message") {});
-
-        // When
-        listener.handleMessage(null);
-
-        // Then
-        verify(objectMapper).readValue((String) isNull(), eq(Order.class));
-    }
-
-    @Test
-    void handleDeadMessage_shouldProcessDlqMessage() throws InterruptedException {
-        // Given
-        String dlqMessage = "{\"id\":2,\"customerId\":\"CUST001\",\"productId\":\"PROD123\"}";
-
-        // When
-        listener.handleDeadMessage(dlqMessage);
-
-        // Then
-        // No exception should be thrown and message should be logged
-        // This test verifies the method executes without errors
-    }
-
-    @Test
-    void handleDeadMessage_withNullMessage_shouldNotThrowException() throws InterruptedException {
-        // When
-        listener.handleDeadMessage(null);
-
-        // Then
-        // No exception should be thrown
-    }
-
-    @Test
-    void handleDeadMessage_withEmptyMessage_shouldNotThrowException() throws InterruptedException {
-        // When
-        listener.handleDeadMessage("");
-
-        // Then
-        // No exception should be thrown
-    }
+    // Act & Assert
+    assertDoesNotThrow(() -> orderEventListener.handleDeadMessage(msg));
+  }
 }

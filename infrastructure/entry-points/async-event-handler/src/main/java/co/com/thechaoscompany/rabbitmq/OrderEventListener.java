@@ -14,15 +14,27 @@ import org.springframework.stereotype.Component;
 public class OrderEventListener {
 
     private final ObjectMapper objectMapper;
+    private int sleepSeconds = 5;
+    private int dlqSleepSeconds = 15;
 
-    private static void sleep(int seconds) throws InterruptedException {
-        Thread.sleep(seconds * 1000L);
+    public void setSleepSeconds(int sleepSeconds) {
+        this.sleepSeconds = sleepSeconds;
+    }
+
+    public void setDlqSleepSeconds(int dlqSleepSeconds) {
+        this.dlqSleepSeconds = dlqSleepSeconds;
+    }
+
+    private void sleep(int seconds) throws InterruptedException {
+        if (seconds > 0) {
+            Thread.sleep(seconds * 1000L);
+        }
     }
 
     @RabbitListener(queues = "${rabbit.queue}")
     public void handleMessage(String message) {
         try {
-            sleep(5);
+            sleep(sleepSeconds);
             Order order = objectMapper.readValue(message, Order.class);
             log.info("Received message: {}", order);
             if (order.getId() % 2 == 0) {
@@ -35,7 +47,7 @@ public class OrderEventListener {
 
     @RabbitListener(queues = "${rabbit.dlq.queue}")
     public void handleDeadMessage(String msg) throws InterruptedException {
-        sleep(15);
+        sleep(dlqSleepSeconds);
         log.warn("Message received from DLQ: {}", msg);
     }
 
